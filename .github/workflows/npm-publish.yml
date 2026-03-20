@@ -35,7 +35,7 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@datakore'
           cache: 'npm'
-          cache-dependency-path: './chronoid-ts/package-lock.json'
+          cache-dependency-path: 'chronoid-ts/package-lock.json'
 
       - name: Install Clean Dependencies (npm ci)
         run: npm ci
