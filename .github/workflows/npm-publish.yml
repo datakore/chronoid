@@ -1,0 +1,73 @@
+name: Publish chronoid to GitHub Packages
+
+on:
+  push:
+    branches: [main]
+  # Allows you to securely trigger the publish job manually from the GitHub UI Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    
+    # Required safely granting token access writing to GitHub's internal Package Registry and pushing commits
+    permissions:
+      contents: write
+      packages: write
+
+    # Ensures all standard run commands strictly execute inside your TypeScript project root
+    defaults:
+      run:
+        working-directory: ./chronoid-ts
+
+    steps:
+      - name: Checkout Repository (Main Branch)
+        uses: actions/checkout@v4
+        with:
+          # Assumes the pipeline executes across main branch changes
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x 
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@datakore'
+          cache: 'npm'
+          cache-dependency-path: './chronoid-ts/package-lock.json'
+
+      - name: Install Clean Dependencies (npm ci)
+        run: npm ci
+
+      - name: Verify Strict Types
+        run: npm run typecheck
+
+      - name: Execute Vitest Assertions
+        run: npm run test -- run
+
+      - name: Build Distribution Native Bundles
+        run: npm run build
+
+      - name: Publish Package to GitHub Registry
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Bump to Next Dev Version & Commit to Main
+        run: |
+          # We immediately increment the patch number representing the next working dev version logically
+          npm version patch --no-git-tag-version
+          
+          # Setup Git securely bypassing prompts
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Add incremented package matrices explicitly
+          git add package.json package-lock.json
+          
+          # Commit the changes mapping cleanly to skipping cyclic CI loop triggers securely!
+          git commit -m "chore: bump to next dev iteration [skip ci]"
+          
+          # Push specifically directly to main
+          git push origin HEAD:main
