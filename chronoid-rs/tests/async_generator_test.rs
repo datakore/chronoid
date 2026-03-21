@@ -1,4 +1,4 @@
-use chronoid_rs::{SnowflakeGenerator, AsyncExhaustionStrategy};
+use datakore_chronoid::{SnowflakeGenerator, AsyncExhaustionStrategy};
 use std::time::{Duration, Instant};
 use std::collections::HashSet;
 use std::fs::File;
