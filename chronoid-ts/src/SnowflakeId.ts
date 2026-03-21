@@ -1,4 +1,4 @@
-import type { TsComponents } from './types.js';
+import type { SnowflakeComponents } from './types.js';
 import { InvalidId, ParseError } from './errors.js';
 
 /**
@@ -95,7 +95,7 @@ export class SnowflakeId {
     return Number((this.value >> 0n) & 0x3FFn);
   }
 
-  public ts_components(base_year: number): TsComponents {
+  public ts_components(base_year: number): SnowflakeComponents {
     const yearOffset = Number((this.value >> 55n) & 0xFFn);
     const signedOffset = (yearOffset >= 128) ? yearOffset - 256 : yearOffset;
     

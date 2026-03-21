@@ -48,18 +48,18 @@ describe('AsyncSnowflakeGenerator', () => {
         expect(ids.size).toBe(1100);
     });
 
-    // Validating your scenario: 10 simulated parallel worker loops generating dynamically for 5ms natively
-    it('should generate continuously via 10 diff workers for 5ms', async () => {
+    // Validating your scenario: 10 simulated parallel worker loops generating dynamically for 100ms natively
+    it('should generate continuously via 10 diff workers for 100ms', async () => {
         const workers = Array.from({ length: 10 }).map((_, i) =>
             // We assign 'i' as the worker_id dynamically representing 0 through 9
             SnowflakeGenerator.create(1975, 1, i, AsyncExhaustionStrategy.WaitAsync)
         );
 
         const allIds = new Set<bigint>();
-        const endTime = Date.now() + 5;
+        const endTime = Date.now() + 100;
 
         // Create an asynchronous generator loop structure
-        const runWorker = async (gen: typeof workers[0]) => {
+        const runWorker = async (gen: any) => {
             while (Date.now() < endTime) {
                 const id = await gen.generate();
                 allIds.add(id.to_raw_i64());
@@ -69,8 +69,7 @@ describe('AsyncSnowflakeGenerator', () => {
         // Fire all 10 worker loops into the JS event loop concurrently via Promise.All!
         await Promise.all(workers.map(w => runWorker(w)));
 
-        // Expect thousands of generated unique identifiers scattered natively
+        console.log(`TS_BENCHMARK_TOTAL: ${allIds.size}`);
         expect(allIds.size).toBeGreaterThan(0);
-        console.log(`Generated ${allIds.size} entirely unique IDs across 10 workers within precisely 5ms!`);
     });
 });
