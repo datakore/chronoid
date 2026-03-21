@@ -20,12 +20,13 @@ jobs:
       run:
         working-directory: ./chronoid-ts
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
-      - name: Checkout Repository (Main Branch)
+      - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          # Assumes the pipeline executes across main branch changes
-          ref: main
           fetch-depth: 0
 
       - name: Setup Node.js 22.x
@@ -35,7 +36,7 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@datakore'
           cache: 'npm'
-          cache-dependency-path: 'chronoid-ts/package-lock.json'
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install Clean Dependencies (npm ci)
         run: npm ci

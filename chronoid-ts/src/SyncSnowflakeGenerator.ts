@@ -26,10 +26,10 @@ export class SyncSnowflakeGenerator {
   public generate(): SnowflakeId {
     while (true) {
       let nowMs = Date.now();
-      
+
       // Inherit the exact identical synchronous generator engine
       const result = this.asyncGenerator.tryGenerate(nowMs);
-      
+
       if (result !== 'EXHAUSTED') {
         return result;
       }
@@ -38,7 +38,7 @@ export class SyncSnowflakeGenerator {
       if (this.strategy === SyncExhaustionStrategy.Throw) {
         throw new SequenceExhausted("Sequence exhausted for current millisecond.");
       } else {
-        // Block: Synchronous CPU spin-wait until millisecond naturally ticks over bridging time.
+        // Blocking spin-wait until the next millisecond boundary is reached.
         while (Date.now() <= this.asyncGenerator.last_timestamp) {
           // Empty loop completely locks execution evaluating against single-threaded event bounds 
         }
