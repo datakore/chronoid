@@ -17,21 +17,32 @@ The result is an ID that is:
 ## Installation
 
 ```bash
-npm install @datakore/chronoid
+cargo add datakore-chronoid
 ```
 
 ## Usage
 
-```typescript
-import { SnowflakeGenerator, AsyncExhaustionStrategy } from '@datakore/chronoid';
+```rust
+use datakore_chronoid::{SnowflakeGenerator, AsyncExhaustionStrategy};
 
-const generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.WaitAsync);
-const id = await generator.generate();
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let mut generator = SnowflakeGenerator::create(
+        2024, 
+        1, 
+        1, 
+        AsyncExhaustionStrategy::WaitAsync
+    )?;
+    
+    let id = generator.generate().await?;
 
-console.log(id.to_string());         // decimal string
-console.log(id.to_hex());            // hex string
-console.log(id.to_base62());         // base62 string
-console.log(id.ts_components(2024)); // { year: 2024, day: 180, ... }
+    println!("{}", id.to_string());       // decimal
+    println!("{}", id.to_hex());          // hex
+    println!("{}", id.to_base62());       // base62
+    println!("{:?}", id.ts_components(2024)); // SnowflakeComponents { ... }
+    
+    Ok(())
+}
 ```
 ---
 

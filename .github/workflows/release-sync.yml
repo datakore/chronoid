@@ -52,16 +52,16 @@ jobs:
           git tag -a "v$CURRENT_VERSION" -m "Release v$CURRENT_VERSION"
           git push origin "v$CURRENT_VERSION"
 
-      # 3. Publish Artifacts
+      # 4. Publish Artifacts (TS & RS)
       - name: Publish Artifacts (TS & RS)
         run: |
           cd chronoid-ts && npm publish --access public && cd ..
-          cd chronoid-rs && cargo publish --token ${{ secrets.CRATES_IO_TOKEN }} && cd ..
+          cd chronoid-rs && cargo publish --allow-dirty && cd ..
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
-      # 4. Atomic Version Bump (Bumps to 0.1.2)
+      # 5. Atomic Version Bump (Bumps to 0.1.2)
       - name: Unified Version Bump & Sync
         run: |
           # Increment TS project
@@ -74,6 +74,6 @@ jobs:
           sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" chronoid-rs/Cargo.toml
           
           # Commit and Push synchronization
-          git add chronoid-ts/package.json chronoid-ts/package-lock.json chronoid-rs/Cargo.toml
+          git add chronoid-ts/package.json chronoid-ts/package-lock.json chronoid-rs/Cargo.toml chronoid-rs/Cargo.lock
           git commit -m "chore: bump unified release to $NEW_VERSION [skip ci]"
           git push origin HEAD:main

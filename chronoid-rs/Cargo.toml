@@ -1,6 +1,6 @@
 [package]
-name = "chronoid-rs"
-version = "0.1.1"
+name = "datakore-chronoid"
+version = "0.1.2"
 edition = "2024"
 description = "High-performance, distributed 64-bit Snowflake ID generator with millisecond-precision."
 license = "MIT"

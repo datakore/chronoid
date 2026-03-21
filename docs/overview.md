@@ -71,8 +71,8 @@ See [docs/bit-layout.md](docs/bit-layout.md) for the full layout with ASCII diag
 
 | Language | Package | Status |
 |---|---|---|
-| TypeScript | `@datakore/chronoid` | 🚧 In Progress |
-| Rust | `chronoid` (crates.io) | 🚧 In Progress |
+| TypeScript | [`@datakore/chronoid`](../chronoid-ts/) | ✅ Released (v0.1.1) |
+| Rust | [`datakore-chronoid`](../chronoid-rs/) | ✅ Released (v0.1.1) |
 | Java | `io.github.datakore:chronoid` | 🚧 In Progress |
 
 ---
@@ -86,23 +86,23 @@ import { SnowflakeGenerator, AsyncExhaustionStrategy } from '@datakore/chronoid'
 const generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.WaitAsync);
 const id = await generator.generate();
 
-console.log(id.toString());         // decimal
-console.log(id.toHex());            // hex
-console.log(id.toBase62());         // base62
-console.log(id.tsComponents());     // { year: 2024, day: 180, minute: 720, millisecond: 30000 }
+console.log(id.to_string());         // decimal string
+console.log(id.to_hex());            // hex string
+console.log(id.to_base62());         // base62 string
+console.log(id.ts_components(2024)); // { year: 2024, day: 180, ... }
 ```
 
 ### Rust
 ```rust
-use chronoid::{SnowflakeGenerator, AsyncExhaustionStrategy};
+use datakore_chronoid::{SnowflakeGenerator, AsyncExhaustionStrategy};
 
-let generator = SnowflakeGenerator::create(2024, 1, 1, AsyncExhaustionStrategy::WaitAsync)?;
+let mut generator = SnowflakeGenerator::create(2024, 1, 1, AsyncExhaustionStrategy::WaitAsync)?;
 let id = generator.generate().await?;
 
-println!("{}", id.to_string());     // decimal
-println!("{}", id.to_hex());        // hex
-println!("{}", id.to_base62());     // base62
-println!("{:?}", id.ts_components()); // TsComponents { year: 2024, day: 180, ... }
+println!("{}", id.to_string());       // decimal string
+println!("{}", id.to_hex());          // hex string
+println!("{}", id.to_base62());       // base62 string
+println!("{:?}", id.ts_components(2024)); // SnowflakeComponents { year: 2024, ... }
 ```
 
 ### Java
@@ -120,11 +120,11 @@ System.out.println(id.tsComponents());  // TsComponents { year=2024, day=180, ..
 
 ## Documentation
 
-- [Overview](docs/overview.md)
-- [Bit Layout](docs/bit-layout.md)
-- [Interface Specification](docs/interface-spec.md)
-- [Exhaustion Strategies](docs/exhaustion-strategies.md)
-- [Day Overflow Extension](docs/extension-day-overflow.md)
+- [Overview](overview.md)
+- [Bit Layout](bit-layout.md)
+- [Interface Specification](interface-spec.md)
+- [Exhaustion Strategies](exhaustion-strategies.md)
+- [Day Overflow Extension](extension-day-overflow.md)
 
 ---
 
@@ -132,10 +132,10 @@ System.out.println(id.tsComponents());  // TsComponents { year=2024, day=180, ..
 
 ```
 chronoid/
-├── docs/                   # Language-agnostic documentation
-├── chronoid-ts/            # TypeScript implementation
-├── chronoid-rust/          # Rust implementation
-└── chronoid-java/          # Java implementation
+|-- docs/                   # Language-agnostic documentation
+|-- chronoid-ts/            # TypeScript implementation
+|-- chronoid-rs/            # Rust implementation
+`-- chronoid-java/          # Java implementation
 ```
 
 ---
