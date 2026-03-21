@@ -1,0 +1,79 @@
+name: Unified chronoid Release (TS & Rust)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-test-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git Identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x 
+          registry-url: 'https://registry.npmjs.org'
+          scope: '@datakore'
+          cache: 'npm'
+          cache-dependency-path: 'chronoid-ts/package-lock.json'
+
+      - name: Setup Rust Stable
+        uses: dtolnay/rust-toolchain@stable
+
+      # 1. Verification Block
+      - name: Build & Test (All)
+        run: |
+          cd chronoid-ts && npm ci && npm run typecheck && npm run test -- run && npm run build && cd ..
+          cd chronoid-rs && cargo check && cargo test --release && cd ..
+
+      # 2. Tag current version before bumping (e.g. v0.1.1)
+      - name: Create Release Tag
+        run: |
+          CURRENT_VERSION=$(node -p "require('./chronoid-ts/package.json').version")
+          echo "Tagging as v$CURRENT_VERSION"
+          git tag -a "v$CURRENT_VERSION" -m "Release v$CURRENT_VERSION"
+          git push origin "v$CURRENT_VERSION"
+
+      # 3. Publish Artifacts
+      - name: Publish Artifacts (TS & RS)
+        run: |
+          cd chronoid-ts && npm publish --access public && cd ..
+          cd chronoid-rs && cargo publish --token ${{ secrets.CRATES_IO_TOKEN }} && cd ..
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+
+      # 4. Atomic Version Bump (Bumps to 0.1.2)
+      - name: Unified Version Bump & Sync
+        run: |
+          # Increment TS project
+          cd chronoid-ts
+          npm version patch --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          cd ..
+
+          # Synchronize Rust project to identical semver
+          sed -i "s/^version = \".*\"/version = \"$NEW_VERSION\"/" chronoid-rs/Cargo.toml
+          
+          # Commit and Push synchronization
+          git add chronoid-ts/package.json chronoid-ts/package-lock.json chronoid-rs/Cargo.toml
+          git commit -m "chore: bump unified release to $NEW_VERSION [skip ci]"
+          git push origin HEAD:main

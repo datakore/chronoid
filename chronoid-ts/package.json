@@ -10,6 +10,10 @@
     "type": "git",
     "url": "git+https://github.com/datakore/chronoid.git"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "exports": {
     ".": "./dist/index.mjs",
     "./package.json": "./package.json"
