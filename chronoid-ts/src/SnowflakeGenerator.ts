@@ -31,8 +31,8 @@ export class SnowflakeGenerator {
     if (base_year < 1900 || base_year > 2200) {
       throw new Error(`base_year must be between 1900 and 2200. Got: ${base_year}`);
     }
-    if (node_id < 0 || node_id > 31) {
-      throw new InvalidNodeId(`node_id must be between 0 and 31. Got: ${node_id}`);
+    if (node_id < 0 || node_id > 15) {
+      throw new InvalidNodeId(`node_id must be between 0 and 15. Got: ${node_id}`);
     }
     if (worker_id < 0 || worker_id > 15) {
       throw new InvalidWorkerId(`worker_id must be between 0 and 15. Got: ${worker_id}`);

@@ -33,7 +33,7 @@ public class AsyncSnowflakeGenerator {
         }
 
         if (nowMs == lastTimestamp && lastTimestamp != -1) {
-            if (sequence >= 1023) {
+            if (sequence >= 2047) {
                 return null; // EXHAUSTED
             }
             sequence++;
@@ -58,8 +58,8 @@ public class AsyncSnowflakeGenerator {
         long day = (nowMs - cachedStartOfYearMs) / 86400000L;
         long minute = (nowMs / 60000L) % 1440L;
         long millisecond = nowMs % 60000L;
-        long node = (long) nodeId << 14;
-        long worker = (long) workerId << 10;
+        long node = (long) nodeId << 15;
+        long worker = (long) workerId << 11;
 
         cachedPrefix = worker 
                      | node 

@@ -5,7 +5,7 @@ import { InvalidId, ParseError } from '../src/errors.js';
 describe('SnowflakeId', () => {
     // Helper to construct a valid 64-bit ID from components
     function buildId(yearOffset: bigint, day: bigint, minute: bigint, ms: bigint, node: bigint, worker: bigint, seq: bigint): bigint {
-        return (yearOffset << 55n) | (day << 46n) | (minute << 35n) | (ms << 19n) | (node << 14n) | (worker << 10n) | seq;
+        return (yearOffset << 55n) | (day << 46n) | (minute << 35n) | (ms << 19n) | (node << 15n) | (worker << 11n) | seq;
     }
 
     // A valid ID: Year +24, Day 180, Minute 720, Ms 30000, Node 3, Worker 2, Sequence 1
@@ -106,6 +106,26 @@ describe('SnowflakeId', () => {
             const id = SnowflakeId.from(validIdValue);
             expect(id.toJSON()).toBe(validIdValue.toString());
             expect(JSON.stringify({ id })).toBe(`{"id":"${validIdValue.toString()}"}`);
+        });
+    });
+
+    describe('Comparison', () => {
+        it('should prioritize Timestamp > Sequence > (Node + Worker)', () => {
+            const id1 = SnowflakeId.from(buildId(24n, 180n, 720n, 30000n, 3n, 2n, 10n));
+            const id2 = SnowflakeId.from(buildId(24n, 180n, 720n, 30001n, 0n, 0n, 0n));
+            
+            // id2 has later timestamp
+            expect(SnowflakeId.compare(id2, id1)).toBeGreaterThan(0);
+
+            // Same Time, different Sequence
+            const id3 = SnowflakeId.from(buildId(24n, 180n, 720n, 30000n, 10n, 10n, 5n));
+            // id3 has smaller sequence (5 vs 10)
+            expect(SnowflakeId.compare(id3, id1)).toBeLessThan(0);
+
+            // Same Time, same Sequence, different Node/Worker
+            const id4 = SnowflakeId.from(buildId(24n, 180n, 720n, 30000n, 3n, 1n, 5n));
+            // id4 has same seq as id3 (5), but smaller worker (1 vs 10)
+            expect(SnowflakeId.compare(id4, id3)).toBeLessThan(0);
         });
     });
 });

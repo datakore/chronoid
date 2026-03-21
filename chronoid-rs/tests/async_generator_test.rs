@@ -3,11 +3,11 @@ use std::time::{Duration, Instant};
 use std::collections::HashSet;
 
 #[tokio::test]
-async fn test_exhaustive_512_worker_uniqueness() {
+async fn test_exhaustive_256_worker_uniqueness() {
     let mut handlers = vec![];
     let runtime = Duration::from_millis(10);
     
-    for node in 0..32 {
+    for node in 0..16 {
         for worker in 0..16 {
             let mut generator = SnowflakeGenerator::create(2024, node, worker, AsyncExhaustionStrategy::WaitAsync).unwrap();
             let handle = tokio::spawn(async move {
@@ -34,7 +34,7 @@ async fn test_exhaustive_512_worker_uniqueness() {
         }
     }
     assert_eq!(total_count, total_ids.len());
-    println!("SUCCESS: Processed {} unique identifiers from 512 concurrent nodes with 0 collisions!", total_count);
+    println!("SUCCESS: Processed {} unique identifiers from 256 concurrent nodes with 0 collisions!", total_count);
 }
 
 #[tokio::test]

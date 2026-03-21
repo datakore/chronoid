@@ -1,77 +1,48 @@
-# chronoid-java
+# chronoid-java (v2)
 
-A high-performance Java 17 implementation of the distributed Chronoid (Snowflake variant) ID generator with human-readable calendar timestamps.
+High-performance Java 17 implementation of the distributed Chronoid ID generator.
+
+## Key Changes in v2
+- **Higher Burst Capacity**: Increased sequence bits from 10 to 11 (2,048 IDs/ms per worker).
+- **Consolidated Node/Worker ID**: Node (4 bits) and Worker (4 bits) providing support for 256 concurrent processes.
+- **Improved Sorting**: Implemented `Comparable` and `Serializable` for native Java use.
 
 ---
 
-## Installation
-
-Add the following to your `pom.xml`:
-
+## Installation (Maven)
 ```xml
 <dependency>
     <groupId>io.github.datakore</groupId>
     <artifactId>chronoid</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.4</version>
 </dependency>
 ```
 
----
-
 ## Usage
-
-### Asynchronous Generation (Non-blocking)
-
 ```java
 import io.github.datakore.chronoid.*;
 
 AsyncSnowflakeGenerator generator = SnowflakeGenerator.create(
-    2024,                       // base year
-    1,                          // node ID
-    1,                          // worker ID
+    2024,                      // Base Year
+    1,                         // Node ID (0-15)
+    1,                         // Worker ID (0-15)
     AsyncExhaustionStrategy.WAIT_ASYNC
 );
 
-generator.generate().thenAccept(id -> {
-    System.out.println("Generated ID: " + id.toString());
-    System.out.println("ID in Hex: " + id.toHex());
-});
+SnowflakeId id = generator.generate().join();
+System.out.println("ID: " + id.toString());
+System.out.println("Hex: " + id.toHex());
 ```
 
-### Synchronous Generation (Blocking)
+## Features
+- **256-year range** anchored at a configurable base year.
+- **Human-readable timestamps** directly encoded into the ID components.
+- **Lexicographical sortability** (Timestamp > Sequence > Node/Worker).
 
-```java
-import io.github.datakore.chronoid.*;
-
-SyncSnowflakeGenerator generator = SnowflakeGenerator.createSync(
-    2024, 
-    1, 
-    1, 
-    SyncExhaustionStrategy.BLOCK
-);
-
-SnowflakeId id = generator.generate();
-System.out.println(id.toBase62());
-```
-
----
-
-## Data Models
-
-This library utilizes Java 17 **Records** for immutability and memory efficiency.
-
-```java
-SnowflakeId id = ...;
-SnowflakeComponents comps = id.getComponents(2024);
-
-System.out.println(comps.year());
-System.out.println(comps.day());
-System.out.println(comps.minute());
-System.out.println(comps.millisecond());
-```
+## Performance
+Achieves **913k IDs per 100ms** on local benchmarks.
 
 ---
 
 ## License
-
 MIT

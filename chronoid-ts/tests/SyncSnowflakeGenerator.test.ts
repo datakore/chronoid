@@ -22,7 +22,7 @@ describe('SyncSnowflakeGenerator', () => {
         vi.spyOn(Date, 'now').mockReturnValue(123456789);
         let threw = false;
         try {
-            for (let i = 0; i < 1100; i++) {
+            for (let i = 0; i < 2100; i++) {
                 generator.generate();
             }
         } catch (e) {
@@ -39,10 +39,10 @@ describe('SyncSnowflakeGenerator', () => {
         const generator = SnowflakeGenerator.create_sync(2020, 2, 5, SyncExhaustionStrategy.Block);
 
         const ids = new Set<bigint>();
-        // 1100 generations synchronously will hit 1024 identically, spin-lock identically until the timer ticks, and then run the remaining cleanly
-        for (let i = 0; i < 1100; i++) {
+        // 2100 generations synchronously will hit 2048 identically, spin-lock identically until the timer ticks, and then run the remaining cleanly
+        for (let i = 0; i < 2100; i++) {
             ids.add(generator.generate().to_raw_i64());
         }
-        expect(ids.size).toBe(1100);
+        expect(ids.size).toBe(2100);
     });
 });

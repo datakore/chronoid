@@ -78,7 +78,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
 name = "datakore-chronoid"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "base62",
  "chrono",

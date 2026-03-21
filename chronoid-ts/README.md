@@ -1,40 +1,37 @@
+# chronoid-ts (v2)
 
-## What is chronoid?
+TypeScript implementation of the Chronoid distributed 64-bit ID generator.
 
-**chronoid** is a distributed unique ID generator inspired by Twitter's Snowflake ID scheme. It produces 64-bit, time-sortable, unique IDs suitable for distributed systems — with one key difference in how time is encoded.
-
-Instead of storing a raw millisecond offset from a fixed epoch, chronoid decomposes the timestamp into **human-readable calendar components** — year, day-of-year, minute-of-day, and millisecond-of-minute — packed efficiently into 44 bits.
-
-The result is an ID that is:
-- **Time-sortable** — lexicographic order reflects chronological order
-- **Human-inspectable** — timestamp components are directly readable from the ID without full decoding
-- **Distributed-safe** — node and worker fields ensure uniqueness across a cluster
-- **Long-lived** — 256-year range anchored at a configurable base year
-
----
-# Getting Started
+## Features (v2)
+- **High Burst Capacity**: **2,048 IDs/ms** per process.
+- **Node/Worker Layout**: Support for 256 concurrent processes (16 Nodes × 16 Workers).
+- **Human Inspectable**: Calendar-decomposed timestamps (Year, Day, Minute, Ms).
+- **Zero Dependencies**: Lightweight and fast.
+- **Cross-Platform**: Matches Rust and Java bit layouts exactly.
 
 ## Installation
-
 ```bash
 npm install @datakore/chronoid
 ```
 
 ## Usage
-
 ```typescript
 import { SnowflakeGenerator, AsyncExhaustionStrategy } from '@datakore/chronoid';
 
-const generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.WaitAsync);
-const id = await generator.generate();
+const generator = SnowflakeGenerator.create(
+    2024,                      // base year
+    1,                         // node ID (0-15)
+    1,                         // worker ID (0-15)
+    AsyncExhaustionStrategy.WaitAsync
+);
 
-console.log(id.to_string());         // decimal string
-console.log(id.to_hex());            // hex string
-console.log(id.to_base62());         // base62 string
-console.log(id.ts_components(2024)); // { year: 2024, day: 180, ... }
+const id = await generator.generate();
+console.log("ID:", id.to_string());
+console.log("TS Components:", id.ts_components(2024));
 ```
----
+
+## Performance
+Achieves **102k IDs per 100ms** in Node.js environments.
 
 ## License
-
 MIT

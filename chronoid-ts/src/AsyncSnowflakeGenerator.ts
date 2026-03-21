@@ -35,7 +35,7 @@ export class AsyncSnowflakeGenerator {
     }
 
     if (nowMs === this.last_timestamp) {
-      if (this.sequence >= 1023) {
+      if (this.sequence >= 2047) {
         return 'EXHAUSTED';
       }
       this.sequence++;
@@ -63,8 +63,8 @@ export class AsyncSnowflakeGenerator {
     const worker = BigInt(this.worker_id);
 
     // Cache the completely shifted timestamp block mapping exclusively over sequence limit mappings natively.
-    this.cachedPrefix = (worker << 10n) 
-                      | (node << 14n) 
+    this.cachedPrefix = (worker << 11n) 
+                      | (node << 15n) 
                       | (millisecond << 19n) 
                       | (minute << 35n) 
                       | (day << 46n) 

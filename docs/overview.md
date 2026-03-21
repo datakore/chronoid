@@ -1,144 +1,65 @@
-# chronoid
+# chronoid (v2)
 
-> A distributed 64-bit ID generator with calendar-decomposed timestamps — a Snowflake variant offering 256-year range and human-readable time components.
+> A distributed 64-bit ID generator with calendar-decomposed timestamps — a Snowflake variant offering 256-year range, human-readable time components, and prioritized chronological sorting.
 
 ---
 
 ## What is chronoid?
 
-**chronoid** is a distributed unique ID generator inspired by Twitter's Snowflake ID scheme. It produces 64-bit, time-sortable, unique IDs suitable for distributed systems — with one key difference in how time is encoded.
+**chronoid** is a distributed unique ID generator inspired by Twitter's Snowflake ID scheme. It produces 64-bit, unique IDs suitable for distributed systems with a focus on longevity and inspectability.
 
-Instead of storing a raw millisecond offset from a fixed epoch, chronoid decomposes the timestamp into **human-readable calendar components** — year, day-of-year, minute-of-day, and millisecond-of-minute — packed efficiently into 44 bits.
+Instead of a raw offset, chronoid decomposes time into **human-readable calendar components** — year, day, minute, and millisecond — packed into 44 bits.
 
 The result is an ID that is:
-- **Time-sortable** — lexicographic order reflects chronological order
-- **Human-inspectable** — timestamp components are directly readable from the ID without full decoding
-- **Distributed-safe** — node and worker fields ensure uniqueness across a cluster
-- **Long-lived** — 256-year range anchored at a configurable base year
+- **Lexicographically Sortable** — optimized for chronological order across nodes
+- **Human-inspectable** — timestamp components are directly readable from bitmasking
+- **Century-Durable** — 256-year range anchored at a configurable base year
+- **Burst-Safe** — supports 2,048 IDs per millisecond per process
 
 ---
 
-## An Alternate Thought on Snowflake IDs
-
-Twitter's Snowflake ID is a battle-tested scheme widely adopted across distributed systems. chronoid is not a replacement — it is an **alternate perspective** on one specific aspect: the timestamp encoding.
-
-Snowflake encodes time as a raw millisecond offset from a fixed epoch using 41 bits, giving a range of approximately **69 years**. For most systems, 69 years is more than sufficient. However, the raw offset approach has a minor characteristic worth noting:
-
-- The timestamp is **opaque** — to know what time an ID was generated, you must decode the full offset from the epoch
-- The **69-year ceiling** is fixed and non-negotiable without changing the bit layout
-
-chronoid addresses both by decomposing the timestamp into calendar units, extending the range to **256 years** while making the time components directly accessible — without changing the total 64-bit budget.
-
----
-
-## Bit Layout
-
-See [docs/bit-layout.md](docs/bit-layout.md) for the full layout with ASCII diagram and field-by-field breakdown.
-
----
-
-## ID Structure at a Glance
+## ID Structure at a Glance (v2)
 
 | Field | Bits | Description |
 |---|---|---|
-| Sign | 1 | Reserved, always 0 — ensures BIGINT compatibility |
-| Year offset | 8 | Signed offset from base year (-128 to +127) |
-| Day of year | 9 | 0–365 (values 367–511 reserved for future extension) |
-| Minute of day | 11 | 0–1439 |
-| Millisecond of minute | 16 | 0–59999 |
-| Node ID | 5 | 0–31 |
-| Worker ID | 4 | 0–15 |
-| Sequence | 10 | 0–1023 per millisecond |
+| Sign | 1 | Reserved (0) for BIGINT compatibility |
+| Year offset | 8 | Signed offset from base year (256 years total) |
+| Day of year | 9 | 0–365 |
+| Minute of day | 11 | 0–1,439 |
+| Millisecond of minute | 16 | 0–59,999 |
+| Node ID | 4 | Up to 16 clusters/nodes |
+| Worker ID | 4 | Up to 16 workers per node |
+| Sequence | 11 | 0–2,047 per millisecond |
 
 **Total: 64 bits**
 
 ---
 
+## Comparison Priority
+Chronoid implements a custom comparison priority to ensure robust chronological ordering even across distributed nodes:
+1. **Timestamp** (Highest Priority)
+2. **Sequence Number** (Within same MS)
+3. **Node/Worker ID** (Tie-breaker)
+
+This ensures that if two nodes generate IDs in the same millisecond, they interleave according to their local generation order before falling back to node hierarchy.
+
+---
+
 ## Features
 
-- 📅 **Calendar-decomposed timestamps** — year, day, minute, millisecond directly encoded
-- 🕐 **256-year range** with a configurable base year
-- 🔢 **Backward compatible** with signed 64-bit integer storage (BIGINT, i64)
-- 🌐 **Cluster-ready** — supports 32 nodes × 16 workers (512 total workers)
-- ⚡ **1024 IDs per millisecond** per worker
-- 🔄 **Three exhaustion strategies** — Throw, WaitAsync, Block
-- 📦 **Multiple serialization formats** — decimal, hex, base62
-- 🔍 **Human-inspectable** — decode year, day, minute, ms directly from the ID
-
----
-
-## Language Implementations
-
-| Language | Package | Status |
-|---|---|---|
-| TypeScript | [`@datakore/chronoid`](../chronoid-ts/) | ✅ Released (v0.1.2) |
-| Rust | [`datakore-chronoid`](../chronoid-rs/) | ✅ Released (v0.1.2) |
-| Java | [`chronoid`](../chronoid-java/) | ✅ Released (v0.1.2) |
-
----
-
-## Quick Example
-
-### TypeScript
-```typescript
-import { SnowflakeGenerator, AsyncExhaustionStrategy } from '@datakore/chronoid';
-
-const generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.WaitAsync);
-const id = await generator.generate();
-
-console.log(id.to_string());         // decimal string
-console.log(id.to_hex());            // hex string
-console.log(id.to_base62());         // base62 string
-console.log(id.ts_components(2024)); // { year: 2024, day: 180, ... }
-```
-
-### Rust
-```rust
-use datakore_chronoid::{SnowflakeGenerator, AsyncExhaustionStrategy};
-
-let mut generator = SnowflakeGenerator::create(2024, 1, 1, AsyncExhaustionStrategy::WaitAsync)?;
-let id = generator.generate().await?;
-
-println!("{}", id.to_string());       // decimal string
-println!("{}", id.to_hex());          // hex string
-println!("{}", id.to_base62());       // base62 string
-println!("{:?}", id.ts_components(2024)); // SnowflakeComponents { year: 2024, ... }
-```
-
-### Java
-```java
-import io.github.datakore.chronoid.*;
-
-AsyncSnowflakeGenerator generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.WAIT_ASYNC);
-SnowflakeId id = generator.generate().get();
-
-System.out.println(id.toString());      // decimal string
-System.out.println(id.toHex());         // hex string
-System.out.println(id.toBase62());      // base62 string
-System.out.println(id.getComponents(2024));  // SnowflakeComponents[year=2024, ...]
-```
+- 📅 **Calendar timestamps** — year, day, minute, millisecond directly encoded
+- 🕐 **256-year range** with configurable base year
+- 🔢 **Natively sortable** as signed 64-bit integers
+- ⚡ **2,048 IDs per millisecond** per worker
+- 🔄 **Consistency** across TypeScript, Rust, and Java
 
 ---
 
 ## Documentation
 
-- [Overview](overview.md)
 - [Bit Layout](bit-layout.md)
-- [Interface Specification](interface-spec.md)
+- [Benchmark Results](benchmark-results.md)
 - [Exhaustion Strategies](exhaustion-strategies.md)
-- [Day Overflow Extension](extension-day-overflow.md)
-
----
-
-## Repository Structure
-
-```
-chronoid/
-|-- docs/                   # Language-agnostic documentation
-|-- chronoid-ts/            # TypeScript implementation
-|-- chronoid-rs/            # Rust implementation
-`-- chronoid-java/          # Java implementation
-```
 
 ---
 

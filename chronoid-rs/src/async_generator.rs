@@ -47,8 +47,8 @@ impl AsyncSnowflakeGenerator {
             )));
         }
 
-        if now_ms == self.last_timestamp {
-            if self.sequence >= 1023 {
+        if now_ms == self.last_timestamp && self.last_timestamp != -1 {
+            if self.sequence >= 2047 {
                 return Ok(None); // EXHAUSTED
             }
             self.sequence += 1;
@@ -74,11 +74,11 @@ impl AsyncSnowflakeGenerator {
         let day = ((now_ms - self.cached_start_of_year_ms) / 86400000) as u64;
         let minute = ((now_ms / 60000) % 1440) as u64;
         let millisecond = (now_ms % 60000) as u64;
-        let node = (self.node_id as u64) << 14;
-        let worker = (self.worker_id as u64) << 10;
+        let node = (self.node_id as u64) << 15;
+        let worker = (self.worker_id as u64) << 11;
 
         self.cached_prefix = worker 
-                           | node 
+            | node 
                            | (millisecond << 19) 
                            | (minute << 35) 
                            | (day << 46) 

@@ -32,7 +32,7 @@ impl SnowflakeGenerator {
                 "base_year must be between 1900 and 2200. Got: {base_year}"
             )));
         }
-        if node_id > 31 {
+        if node_id > 15 {
             return Err(ChronoidError::InvalidNodeId(node_id));
         }
         if worker_id > 15 {

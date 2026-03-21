@@ -12,7 +12,7 @@ describe('AsyncSnowflakeGenerator', () => {
         expect(id1.to_raw_i64()).not.toBe(id2.to_raw_i64());
     });
 
-    it('should throw when sequence exceeds 1023 under Throw strategy', async () => {
+    it('should throw when sequence exceeds 2047 under Throw strategy', async () => {
         const generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.Throw);
 
         // Freeze time linearly so our loop mathematically forces boundary exhaustion regardless of JS engine execution speed
@@ -20,7 +20,7 @@ describe('AsyncSnowflakeGenerator', () => {
 
         let threw = false;
         try {
-            for (let i = 0; i < 1100; i++) {
+            for (let i = 0; i < 2100; i++) {
                 await generator.generate();
             }
         } catch (err) {
@@ -36,16 +36,16 @@ describe('AsyncSnowflakeGenerator', () => {
     it('should wait efficiently under WaitAsync strategy without throwing', async () => {
         const generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.WaitAsync);
 
-        // Push 1100 rapid calls. The first 1024 should execute instantaneously. 
-        // Calls over 1024 will await the next ms tick seamlessly without erroring!
+        // Push 2100 rapid calls. The first 2048 should execute instantaneously. 
+        // Calls over 2048 will await the next ms tick seamlessly without erroring!
         const ids = new Set<bigint>();
-        for (let i = 0; i < 1100; i++) {
+        for (let i = 0; i < 2100; i++) {
             const id = await generator.generate();
             ids.add(id.to_raw_i64());
         }
 
         // Set uniquely holds items, ensuring zero duplicates!
-        expect(ids.size).toBe(1100);
+        expect(ids.size).toBe(2100);
     });
 
     // Validating your scenario: 10 simulated parallel worker loops generating dynamically for 100ms natively

@@ -13,17 +13,17 @@ export class SnowflakeId {
       throw new InvalidId("Sign bit must be 0");
     }
 
-    const worker = Number((value >> 10n) & 0xFn);
-    const node = Number((value >> 14n) & 0x1Fn);
+    const worker = Number((value >> 11n) & 0xFn);
+    const node = Number((value >> 15n) & 0xFn);
     const millisecond = Number((value >> 19n) & 0xFFFFn);
     const minute = Number((value >> 35n) & 0x7FFn);
     const day = Number((value >> 46n) & 0x1FFn);
     const yearOffsetUnsigned = Number((value >> 55n) & 0xFFn);
     const yearOffset = (yearOffsetUnsigned >= 128) ? yearOffsetUnsigned - 256 : yearOffsetUnsigned;
-    const sequence = Number(value & 0x3FFn); // 10 bits natively in chronoid
+    const sequence = Number(value & 0x7FFn);
 
-    if (sequence < 0 || sequence > 1023) {
-      throw new InvalidId(`Sequence must be 10 bits max (0-1023). Got: ${sequence}`);
+    if (sequence < 0 || sequence > 2047) {
+      throw new InvalidId(`Sequence must be 11 bits max (0-2047). Got: ${sequence}`);
     }
 
     if (yearOffset < -128 || yearOffset > 127) {
@@ -38,8 +38,8 @@ export class SnowflakeId {
     if (millisecond > 59999) {
       throw new InvalidId(`Millisecond field must be in range 0-59999. Got: ${millisecond}`);
     }
-    if (node < 0 || node > 31) {
-      throw new InvalidId(`Node ID must be in range 0-31. Got: ${node}`);
+    if (node < 0 || node > 15) {
+      throw new InvalidId(`Node ID must be in range 0-15. Got: ${node}`);
     }
     if (worker < 0 || worker > 15) {
       throw new InvalidId(`Worker ID must be in range 0-15. Got: ${worker}`);
@@ -84,15 +84,15 @@ export class SnowflakeId {
   }
 
   public node(): number {
-    return Number((this.value >> 14n) & 0x1Fn);
+    return Number((this.value >> 15n) & 0xFn);
   }
 
   public worker(): number {
-    return Number((this.value >> 10n) & 0xFn);
+    return Number((this.value >> 11n) & 0xFn);
   }
 
   public sequence(): number {
-    return Number((this.value >> 0n) & 0x3FFn);
+    return Number((this.value >> 0n) & 0x7FFn);
   }
 
   public ts_components(base_year: number): SnowflakeComponents {
@@ -113,5 +113,30 @@ export class SnowflakeId {
 
   toJSON(): string {
     return this.to_string();
+  }
+
+  public static compare(a: SnowflakeId, b: SnowflakeId): number {
+    const aVal = a.to_raw_i64();
+    const bVal = b.to_raw_i64();
+
+    // 1. Timestamp bits (62 down to 19)
+    const aTs = aVal >> 19n;
+    const bTs = bVal >> 19n;
+    if (aTs < bTs) return -1;
+    if (aTs > bTs) return 1;
+
+    // 2. Sequence bits (0 to 10)
+    const aSeq = aVal & 0x7FFn;
+    const bSeq = bVal & 0x7FFn;
+    if (aSeq < bSeq) return -1;
+    if (aSeq > bSeq) return 1;
+
+    // 3. Node/Worker bits (11 down to 18)
+    const aNodeWorker = (aVal >> 11n) & 0xFFn;
+    const bNodeWorker = (bVal >> 11n) & 0xFFn;
+    if (aNodeWorker < bNodeWorker) return -1;
+    if (aNodeWorker > bNodeWorker) return 1;
+
+    return 0;
   }
 }
