@@ -1,8 +1,8 @@
-export interface TsComponents {
-  readonly year: number;
-  readonly day: number;
-  readonly minute: number;
-  readonly millisecond: number;
+export interface SnowflakeComponents {
+  year: number;
+  day: number;
+  minute: number;
+  millisecond: number;
 }
 
 export enum AsyncExhaustionStrategy {

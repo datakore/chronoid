@@ -71,9 +71,9 @@ See [docs/bit-layout.md](docs/bit-layout.md) for the full layout with ASCII diag
 
 | Language | Package | Status |
 |---|---|---|
-| TypeScript | [`@datakore/chronoid`](chronoid-ts/) | ✅ Released (v0.1.1) |
-| Rust | [`datakore-chronoid`](chronoid-rs/) | ✅ Released (v0.1.1) |
-| Java | `io.github.datakore:chronoid` | 🚧 In Progress |
+| TypeScript | [`@datakore/chronoid`](chronoid-ts/) | ✅ Released (v0.1.2) |
+| Rust | [`datakore-chronoid`](chronoid-rs/) | ✅ Released (v0.1.2) |
+| Java | [`chronoid`](chronoid-java/) | ✅ Released (v0.1.2) |
 
 ---
 
@@ -107,13 +107,15 @@ println!("{:?}", id.ts_components(2024)); // SnowflakeComponents { year: 2024, .
 
 ### Java
 ```java
+import io.github.datakore.chronoid.*;
+
 AsyncSnowflakeGenerator generator = SnowflakeGenerator.create(2024, 1, 1, AsyncExhaustionStrategy.WAIT_ASYNC);
 SnowflakeId id = generator.generate().get();
 
-System.out.println(id.toString());      // decimal
-System.out.println(id.toHex());         // hex
-System.out.println(id.toBase62());      // base62
-System.out.println(id.tsComponents());  // TsComponents { year=2024, day=180, ... }
+System.out.println(id.toString());      // decimal string
+System.out.println(id.toHex());         // hex string
+System.out.println(id.toBase62());      // base62 string
+System.out.println(id.getComponents(2024));  // SnowflakeComponents[year=2024, ...]
 ```
 
 ---

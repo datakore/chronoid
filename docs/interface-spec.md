@@ -14,7 +14,7 @@ chronoid exposes three primary entities:
 | `AsyncSnowflakeGenerator` | Stateful async ID generator |
 | `SyncSnowflakeGenerator` | Stateful sync ID generator, wraps async internally |
 | `SnowflakeId` | Value object — wraps the 64-bit ID, exposes accessors |
-| `TsComponents` | Plain data — decoded timestamp components |
+| `SnowflakeComponents` | Plain data — decoded timestamp components |
 | `AsyncExhaustionStrategy` | Enum — strategy for async generator on sequence exhaustion |
 | `SyncExhaustionStrategy` | Enum — strategy for sync generator on sequence exhaustion |
 
@@ -172,7 +172,7 @@ ts_components() → TsComponents
 
 ---
 
-## `TsComponents`
+## `SnowflakeComponents`
 
 Plain immutable data object representing the decoded timestamp fields of a `SnowflakeId`.
 
@@ -187,7 +187,7 @@ millisecond: u16    // millisecond of minute, 0 – 59999
 
 ### Notes
 - `year` is the **actual calendar year**, not the offset — the offset is resolved at decode time using the generator's `base_year`.
-- `TsComponents` is a **read-only data bag** — no methods beyond field access.
+- `SnowflakeComponents` is a **read-only data bag** — no methods beyond field access.
 
 ---
 
@@ -197,11 +197,11 @@ All errors should be represented as typed variants, not raw strings.
 
 | Error | Produced by | Meaning |
 |---|---|---|
-| `InvalidNodeId` | `SnowflakeGenerator.create` | `node_id` out of range 0–31 |
-| `InvalidWorkerId` | `SnowflakeGenerator.create` | `worker_id` out of range 0–15 |
+| `InvalidNodeId` | `create` | `node_id` out of range 0–31 |
+| `InvalidWorkerId` | `create` | `worker_id` out of range 0–15 |
 | `SequenceExhausted` | `generate()` | Sequence exhausted and strategy is `Throw` |
-| `InvalidId` | `SnowflakeId.from` | Bit fields fail validation |
-| `ParseError` | `SnowflakeId.from_string` | Input string is not a valid decimal integer |
+| `InvalidId` | `from` | Bit fields fail validation |
+| `ParseError` | `from_string` | Input string is not a valid decimal integer |
 
 ---
 
@@ -210,26 +210,23 @@ All errors should be represented as typed variants, not raw strings.
 ### TypeScript
 - `i64` → `bigint`
 - `u8`, `u16` → `number`
-- `Future<Result<T>>` → `Promise<T>` (throw on error) or `Promise<Result<T>>` with `neverthrow`
-- Enums → `const enum` or `enum`
-- `from()` and `from_string()` → `static` methods on class
+- `Future<Result<T>>` → `Promise<T>` (throw on error)
+- `SnowflakeComponents` → returned as plain object or record
 
 ### Rust
 - `Future<Result<T>>` → `async fn` returning `Result<T, ChronoidError>`
-- `AsyncExhaustionStrategy` / `SyncExhaustionStrategy` → `enum`
-- `TsComponents` → `struct`
+- `SnowflakeComponents` → `struct`
 - Comparability → `PartialOrd`, `Ord`
-- Serializability → `serde::Serialize`, `serde::Deserialize`
 - `from(i64)` → `TryFrom<i64>` trait
 
 ### Java
 - `i64` → `long`
 - `u8` → `int` (range validated)
 - `Future<Result<T>>` → `CompletableFuture<SnowflakeId>` (exception on error)
-- `AsyncExhaustionStrategy` / `SyncExhaustionStrategy` → `enum`
-- `TsComponents` → `record`
+- `SnowflakeComponents` → `record`
 - Comparability → `Comparable<SnowflakeId>`
 - Serializability → `Serializable`
+- Naming → Uses idiomatic **CamelCase** for all methods.
 
 ---
 
